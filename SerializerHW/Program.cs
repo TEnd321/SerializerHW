@@ -24,8 +24,8 @@ namespace SerializerHW
 
     struct Field<T>
     {
-        T value;
-        string name;
+        public T value;
+        public string name;
     }
 
     class Address
@@ -147,36 +147,21 @@ namespace SerializerHW
             rootDesc.Serialize(tw, person.MobilePhone);
         }
 
-        public static void CountryNamePrinter(TextWriter tw, Country instance) =>
-            tw.WriteLine("<Name>" + instance.Name + "</Name>");
-
-        public static void CountryAreaPrinter(TextWriter tw, Country instance) =>
-            tw.WriteLine("<AreaCode>" + instance.AreaCode.ToString() + "</AreaCode>");
-
-        public static void PersonFirstNamePrinter(TextWriter tw, Person person) =>
-            tw.WriteLine("<FirstName>" + person.FirstName + "</FirstName>");
-
-        public static void PersonLastNamePrinter(TextWriter tw, Person person) =>
-            tw.WriteLine("<LastName>" + person.LastName + "</LastName>");
-
-        public static void AddressStreetPrinter(TextWriter tw, Address address) =>
-            tw.WriteLine("<Street>" + address.Street + "</Street>");
-
-        public static void AddressCityPrinter(TextWriter tw, Address address) =>
-            tw.WriteLine("<City>" + address.City + "</City>");
-
-        public static void PhoneNumberNumberPrinter(TextWriter tw, PhoneNumber phoneNumber) =>
-            tw.WriteLine("<Number>" + phoneNumber.Number + "</Number>");
-
-        public static void PhoneNumberNumberPrinter<T>(TextWriter tw, Field<T> field)
+        public static void FieldPrinter<T>(TextWriter tw, Field<T> field)
         {
-
+            tw.Write("<");
+            tw.Write(field.name);
+            tw.Write(">");
+            tw.Write(field.value.ToString());
+            tw.Write("</");
+            tw.Write(field.name);
+            tw.WriteLine(">");
         }
 
         public static void PersonPrintOrder(TextWriter tw, Person person)
         {
-            PersonFirstNamePrinter(tw, person);
-            PersonLastNamePrinter(tw, person);
+            FieldPrinter<string>(tw, new Field<string> { name = "FirstName", value = person.FirstName });
+            FieldPrinter<string>(tw, new Field<string> { name = "LastName", value = person.LastName });
             SerializePersonHomeAddress(tw, person);
             SerializePersonWorkAddress(tw, person);
             SerializePersonCountry(tw, person);
@@ -186,19 +171,19 @@ namespace SerializerHW
         public static void PhoneNumberPrintOrder(TextWriter tw, PhoneNumber phone)
         {
             SerializePhoneCountry(tw, phone);
-            PhoneNumberNumberPrinter(tw, phone);
+            FieldPrinter<int>(tw, new Field<int> { name = "Number", value = phone.Number });
         }
 
         public static void CountryPrintOrder(TextWriter tw, Country country)
         {
-            CountryNamePrinter(tw, country);
-            CountryAreaPrinter(tw, country);
+            FieldPrinter<string>(tw, new Field<string> { name = "Name", value = country.Name });
+            FieldPrinter<int>(tw, new Field<int> { name = "AreaCode", value = country.AreaCode });
         }
 
         public static void AddressPrintOrder(TextWriter tw, Address address)
         {
-            AddressStreetPrinter(tw, address);
-            AddressCityPrinter(tw, address);
+            FieldPrinter<string>(tw, new Field<string> { name = "Street", value = address.Street });
+            FieldPrinter<string>(tw, new Field<string> { name = "City", value = address.City });
         }
 
         public static void OpenPrint(TextWriter tw, string name) => tw.WriteLine("<" + name + ">");
