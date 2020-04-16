@@ -5,14 +5,19 @@ namespace SerializerHW
 {
 	public delegate void PrinterOpen(TextWriter tw);
 	public delegate void PrinterClose(TextWriter tw);
+	public delegate void FieldPrint<T>(TextWriter tw, T instance);
+	public delegate void SerializeOther<T>(TextWriter tw, T instance);
 	public class RootDescriptor<T>
 	{
 		public PrinterOpen PO { get; set; }
 		public PrinterClose PC { get; set; }
+		public FieldPrint<T> FP { get; set; }
+		public SerializeOther<T> SO { get; set; }
 		public void Serialize(TextWriter writer, T instance)
 		{
-			PO.Invoke(writer);
-			PC.Invoke(writer);
+			PO?.Invoke(writer);
+			FP?.Invoke(writer, instance);
+			PC?.Invoke(writer);
 		}
 	}
 
@@ -48,7 +53,7 @@ namespace SerializerHW
 	{
 		static void Main(string[] args)
 		{
-			RootDescriptor<Person> rootDesc = GetPersonDescriptor();
+			RootDescriptor<Country> rootDesc = GetCountryDescriptor();
 
 			var czechRepublic = new Country { Name = "Czech Republic", AreaCode = 420 };
 			var person = new Person
@@ -61,27 +66,43 @@ namespace SerializerHW
 				MobilePhone = new PhoneNumber { Country = czechRepublic, Number = 123456789 }
 			};
 
-			rootDesc.Serialize(Console.Out, person);
+			rootDesc.Serialize(Console.Out, czechRepublic);
 		}
 
 		static RootDescriptor<Person> GetPersonDescriptor()
 		{
 			var rootDesc = new RootDescriptor<Person>();
-			rootDesc.PO += PersonOpenPrint;
-			rootDesc.PC += PersonClosePrint;
+			rootDesc.PO += OpenPrint<Person>;
+			rootDesc.PC += ClosePrint<Person>;
 			return rootDesc;
 		}
 
 		static RootDescriptor<Country> GetCountryDescriptor()
 		{
-			var rootDest = new RootDescriptor<Country>();
-
-			return rootDest;
+			var rootDesc = new RootDescriptor<Country>();
+			rootDesc.PO += OpenPrint<Country>;
+			rootDesc.FP += CountryNamePrinter;
+			rootDesc.FP += CountryAreaPrinter;
+			rootDesc.PC += ClosePrint<Country>;
+			return rootDesc;
 		}
 
-		static void PersonOpenPrint(TextWriter tw) => tw.WriteLine("<Person>");
+		public static void CountryNamePrinter(TextWriter tw, Country instance)
+		{
+			tw.WriteLine("<Name>" + GetCountryName(instance) + "</Name>");
+		}
 
-		static void PersonClosePrint(TextWriter tw) => tw.WriteLine("</Person>");
-		
+		public static void CountryAreaPrinter(TextWriter tw, Country instance)
+		{
+			tw.WriteLine("<AreaCode>" + GetCountryAreaCode(instance) + "</AreaCode>");
+		}
+
+		public static string GetCountryName(Country country) => country.Name;
+		public static int GetCountryAreaCode(Country country) => country.AreaCode;
+
+		public static void OpenPrint<T>(TextWriter tw) => tw.WriteLine("<" + typeof(T).Name + ">");
+
+		public static void ClosePrint<T>(TextWriter tw) => tw.WriteLine("</" + typeof(T).Name + ">");
+
 	}
 }
