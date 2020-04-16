@@ -7,21 +7,17 @@ namespace SerializerHW
 {
 	public delegate void PrinterOpen(TextWriter tw, string Name);
 	public delegate void PrinterClose(TextWriter tw, string Name);
-	public delegate void FieldPrint<T>(TextWriter tw, T instance);
-	public delegate void SerializeOther<T>(TextWriter tw, T instance);
+	public delegate void PrintOrder<T>(TextWriter tw, T instance);
 	public class RootDescriptor<T>
 	{
 		public string Name { get; set; }
 		public PrinterOpen PO { get; set; }
 		public PrinterClose PC { get; set; }
-		public FieldPrint<T> FP { get; set; }
-		public SerializeOther<T> SO { get; set; }
-
+		public PrintOrder<T> POrd { get; set; }
 		public void Serialize(TextWriter writer, T instance)
 		{
 			PO?.Invoke(writer, Name);
-			FP?.Invoke(writer, instance);
-			SO?.Invoke(writer, instance);
+			POrd?.Invoke(writer, instance);
 			PC?.Invoke(writer, Name);
 		}
 	}
@@ -80,12 +76,7 @@ namespace SerializerHW
 			var rootDesc = new RootDescriptor<Person>();
 			rootDesc.Name = "Person";
 			rootDesc.PO += OpenPrint;
-			rootDesc.FP += PersonFirstNamePrinter;
-			rootDesc.FP += PersonLastNamePrinter;
-			rootDesc.SO += SerializePersonHomeAddress;
-			rootDesc.SO += SerializePersonWorkAddress;
-			rootDesc.SO += SerializePersonCountry;
-			rootDesc.SO += SerializePhoneNumber;
+			rootDesc.POrd += PersonPrintOrder;
 			rootDesc.PC += ClosePrint;
 			return rootDesc;
 		}
@@ -95,8 +86,7 @@ namespace SerializerHW
 			var rootDesc = new RootDescriptor<Country>();
 			rootDesc.Name = name;
 			rootDesc.PO += OpenPrint;
-			rootDesc.FP += CountryNamePrinter;
-			rootDesc.FP += CountryAreaPrinter;
+			rootDesc.POrd += CountryPrintOrder;
 			rootDesc.PC += ClosePrint;
 			return rootDesc;
 		}
@@ -106,8 +96,7 @@ namespace SerializerHW
 			var rootDesc = new RootDescriptor<Address>();
 			rootDesc.Name = name;
 			rootDesc.PO += OpenPrint;
-			rootDesc.FP += AddressStreetPrinter;
-			rootDesc.FP += AddressCityPrinter;
+			rootDesc.POrd += AddressPrintOrder;
 			rootDesc.PC += ClosePrint;
 			return rootDesc;
 		}
@@ -117,8 +106,7 @@ namespace SerializerHW
 			var rootDesc = new RootDescriptor<PhoneNumber>();
 			rootDesc.Name = name;
 			rootDesc.PO += OpenPrint;
-			rootDesc.SO += SerializePhoneCountry;
-			rootDesc.FP += PhoneNumberNumberPrinter;
+			rootDesc.POrd += PhoneNumberPrintOrder;
 			rootDesc.PC += ClosePrint;
 			return rootDesc;
 		}
@@ -173,6 +161,34 @@ namespace SerializerHW
 
 		public static void PhoneNumberNumberPrinter(TextWriter tw, PhoneNumber phoneNumber) =>
 			tw.WriteLine("<Number>" + phoneNumber.Number + "</Number>");
+
+		public static void PersonPrintOrder(TextWriter tw, Person person)
+		{
+			PersonFirstNamePrinter(tw, person);
+			PersonLastNamePrinter(tw, person);
+			SerializePersonHomeAddress(tw, person);
+			SerializePersonWorkAddress(tw, person);
+			SerializePersonCountry(tw, person);
+			SerializePhoneNumber(tw, person);
+		}
+
+		public static void PhoneNumberPrintOrder(TextWriter tw, PhoneNumber phone)
+		{
+			SerializePhoneCountry(tw, phone);
+			PhoneNumberNumberPrinter(tw, phone);
+		}
+
+		public static void CountryPrintOrder(TextWriter tw, Country country)
+		{
+			CountryNamePrinter(tw, country);
+			CountryAreaPrinter(tw, country);
+		}
+
+		public static void AddressPrintOrder(TextWriter tw, Address address)
+		{
+			AddressStreetPrinter(tw, address);
+			AddressCityPrinter(tw, address);
+		}
 
 		public static void OpenPrint(TextWriter tw, string name) => tw.WriteLine("<" + name + ">");
 
